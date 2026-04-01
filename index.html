@@ -300,11 +300,30 @@
   .result-date { font-size: 0.8em; color: var(--text-light); }
   .result-scores { font-size: 0.85em; margin-top: 4px; }
 
-  /* Responsive */
+  /* Responsive - Mobile portrait */
   @media (max-width: 600px) {
-    .criteria-row { flex-direction: column; }
+    header { padding: 14px 16px; }
+    header h1 { font-size: 1.1em; }
+    .container { padding: 10px; }
+    .subject-tab { min-width: 80px; padding: 10px 8px; font-size: 0.85em; }
+    .criteria-row {
+      flex-direction: column;
+      padding: 10px 12px;
+      gap: 6px;
+    }
+    .criteria-text { min-width: unset; font-size: 0.85em; }
     .publisher-headers { display: none; }
     .pub-header-item { width: auto; }
+    .score-btn { width: 32px; height: 32px; font-size: 0.8em; }
+    .mobile-pub-label { display: block !important; }
+    .summary-table th, .summary-table td { padding: 6px 4px; font-size: 0.8em; }
+    .summary-card { padding: 12px; }
+    .admin-panel { padding: 12px; }
+    .comment-area { padding: 12px; }
+    .login-box { margin: 30px auto; padding: 24px 20px; }
+    .btn { padding: 10px 16px; font-size: 0.9em; min-width: 100px; }
+    .section-header { padding: 10px 12px; font-size: 0.9em; }
+    .teacher-info { padding: 12px; }
   }
 
   .page { display: none; }
@@ -1094,9 +1113,9 @@ function createCriteriaRow(sectionId, idx, text, subcategory, publishers) {
     pubDiv.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:2px;';
 
     const label = document.createElement('div');
-    label.className = 'publisher-label';
+    label.className = 'publisher-label mobile-pub-label';
     label.textContent = pub;
-    label.style.display = 'none'; // Hidden on desktop (shown in header), shown on mobile via CSS
+    label.style.display = 'none'; // Shown on mobile via CSS media query
     pubDiv.appendChild(label);
 
     const btnGroup = document.createElement('div');
