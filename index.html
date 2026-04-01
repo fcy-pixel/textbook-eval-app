@@ -442,6 +442,20 @@
   </div>
 </div>
 
+<!-- SUCCESS PAGE -->
+<div id="page-success" class="page">
+  <div style="text-align:center; padding:60px 20px;">
+    <div style="font-size:64px; margin-bottom:16px;">&#10003;</div>
+    <h2 style="color:var(--primary); margin-bottom:12px;">評分已成功提交！</h2>
+    <p style="color:var(--text-light); font-size:1.05em; margin-bottom:8px;">感謝你完成<strong id="success-subject"></strong>的課本評選。</p>
+    <p style="color:var(--text-light); font-size:0.9em; margin-bottom:32px;">你的評分已記錄到系統中。</p>
+    <div class="btn-group" style="max-width:400px; margin:0 auto;">
+      <button class="btn btn-primary" onclick="backToEval()">繼續評選其他科目</button>
+      <button class="btn btn-outline" onclick="logout()">返回登入頁面</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- Firebase -->
@@ -917,7 +931,12 @@ function logout() {
   showPage('login');
 }
 
-const ADMIN_PASSWORD = 'keichi2026';
+function backToEval() {
+  showPage('eval');
+  renderSubjectTabs();
+}
+
+const ADMIN_PASSWORD = 'ktps1234';
 
 function showAdmin() {
   const pw = document.getElementById('admin-password').value;
@@ -1252,9 +1271,18 @@ function submitForm() {
       : db.collection('evaluations').doc(currentSubject).collection('records').add(result);
 
     savePromise.then(() => {
-      showToast(editingDocId ? '已更新評分！' : '已成功提交「' + subj.name + '」評分！');
-      editingDocId = null;
-      editingSubject = null;
+      if (editingDocId) {
+        showToast('已更新評分！');
+        editingDocId = null;
+        editingSubject = null;
+        showPage('admin');
+        loadAdminData();
+      } else {
+        editingDocId = null;
+        editingSubject = null;
+        document.getElementById('success-subject').textContent = '「' + subj.name + '」';
+        showPage('success');
+      }
     }).catch(err => {
       console.error('Firestore error:', err);
       alert('提交失敗：' + err.code + '\n' + err.message + '\n\n請確認：\n1. Firebase Console 已啟用 Firestore\n2. Firestore Rules 已設為 allow read, write: true');
