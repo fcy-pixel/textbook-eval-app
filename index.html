@@ -972,9 +972,12 @@ function doLogin() {
   currentTeacher = name;
   document.getElementById('display-teacher').textContent = name;
   document.getElementById('display-date').textContent = new Date().toLocaleDateString('zh-HK');
-  showPage('eval');
-  renderSubjectTabs();
-  switchSubject('science');
+  // Load saved draft from Firestore
+  loadDraft(name).then(() => {
+    showPage('eval');
+    renderSubjectTabs();
+    switchSubject('science');
+  });
 }
 
 function logout() {
@@ -1118,6 +1121,7 @@ function renderForm() {
   document.getElementById('comment').value = scores[commentKey] || '';
   document.getElementById('comment').onchange = () => {
     scores[currentSubject + '_comment'] = document.getElementById('comment').value;
+    saveDraft();
   };
 }
 
@@ -1176,6 +1180,7 @@ function createCriteriaRow(sectionId, idx, text, subcategory, publishers) {
         });
         updateSummary();
         updateProgress();
+        saveDraft();
       };
 
       btnGroup.appendChild(btn);
@@ -1331,6 +1336,8 @@ function submitForm() {
         editingDocId = null;
         editingSubject = null;
         document.getElementById('success-subject').textContent = '「' + subj.name + '」';
+        // Clear submitted subject from draft
+        clearDraftSubject(currentSubject);
         showPage('success');
         window.scrollTo(0, 0);
       }
@@ -1585,6 +1592,59 @@ function showToast(msg) {
 // ══════════════════════════════════════════════════════════════
 //  Firebase Setup Modal
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+//  Draft Save & Load (auto-save progress per teacher)
+// ══════════════════════════════════════════════════════════════
+
+let draftSaveTimer = null;
+
+function saveDraft() {
+  if (!firebaseReady || !currentTeacher) return;
+  // Debounce: wait 1s after last change
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(() => {
+    const draftData = {};
+    Object.entries(scores).forEach(([k, v]) => {
+      // Firestore doesn't allow '.' in field names
+      draftData[k.replace(/\./g, '_')] = v;
+    });
+    db.collection('drafts').doc(currentTeacher).set({
+      scores: draftData,
+      lastUpdated: new Date().toISOString()
+    }).then(() => {
+      console.log('Draft saved');
+    }).catch(err => {
+      console.warn('Draft save failed:', err);
+    });
+  }, 1000);
+}
+
+function loadDraft(teacherName) {
+  if (!firebaseReady) return Promise.resolve();
+  return db.collection('drafts').doc(teacherName).get().then(doc => {
+    if (doc.exists && doc.data().scores) {
+      const savedScores = doc.data().scores;
+      // Restore scores
+      Object.entries(savedScores).forEach(([k, v]) => {
+        scores[k] = v;
+      });
+      showToast('\u5df2\u8f09\u5165\u4e0a\u6b21\u7684\u8a55\u5206\u9032\u5ea6');
+    }
+  }).catch(err => {
+    console.warn('Draft load failed:', err);
+  });
+}
+
+function clearDraftSubject(subject) {
+  if (!firebaseReady || !currentTeacher) return;
+  // Remove keys for this subject from scores and re-save draft
+  const prefix = subject + '_';
+  Object.keys(scores).forEach(k => {
+    if (k.startsWith(prefix)) delete scores[k];
+  });
+  saveDraft();
+}
 
 // Auto-init Firebase on page load
 window.addEventListener('DOMContentLoaded', () => {
