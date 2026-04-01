@@ -1599,26 +1599,33 @@ function showToast(msg) {
 // ══════════════════════════════════════════════════════════════
 
 function saveDraft() {
-  if (!firebaseReady || !currentTeacher) return Promise.resolve();
+  if (!firebaseReady || !currentTeacher) {
+    showToast('Firebase 未連線，無法儲存');
+    return Promise.resolve();
+  }
   const draftData = {};
   Object.entries(scores).forEach(([k, v]) => {
     draftData[k.replace(/\./g, '_')] = v;
   });
   return db.collection('drafts').doc(currentTeacher).set({
     scores: draftData,
+    teacher: currentTeacher,
     lastUpdated: new Date().toISOString()
   }).then(() => {
-    console.log('Draft saved');
+    console.log('Draft saved to Firestore for:', currentTeacher);
   }).catch(err => {
     console.warn('Draft save failed:', err);
+    showToast('儲存失敗：' + err.message);
   });
 }
 
 function manualSaveDraft() {
   if (!firebaseReady) {
-    // Fallback: save to localStorage
-    localStorage.setItem('draft_' + currentTeacher, JSON.stringify(scores));
-    showToast('已儲存至本地');
+    alert('Firebase 未連線，無法儲存！\n請檢查網絡連線。');
+    return;
+  }
+  if (!currentTeacher) {
+    showToast('請先登入');
     return;
   }
   const draftData = {};
@@ -1627,27 +1634,17 @@ function manualSaveDraft() {
   });
   db.collection('drafts').doc(currentTeacher).set({
     scores: draftData,
+    teacher: currentTeacher,
     lastUpdated: new Date().toISOString()
   }).then(() => {
-    showToast('評分進度已儲存！');
+    showToast('「' + currentTeacher + '」的評分進度已儲存！');
   }).catch(err => {
-    // Fallback to localStorage
-    localStorage.setItem('draft_' + currentTeacher, JSON.stringify(scores));
-    showToast('網絡儲存失敗，已儲存至本地');
+    alert('儲存失敗：' + err.code + '\n' + err.message);
   });
 }
 
 function loadDraft(teacherName) {
   if (!firebaseReady) {
-    // Try localStorage fallback
-    const local = localStorage.getItem('draft_' + teacherName);
-    if (local) {
-      try {
-        const saved = JSON.parse(local);
-        Object.entries(saved).forEach(([k, v]) => { scores[k] = v; });
-        showToast('已載入本地儲存的進度');
-      } catch(e) {}
-    }
     return Promise.resolve();
   }
   return db.collection('drafts').doc(teacherName).get().then(doc => {
@@ -1656,19 +1653,11 @@ function loadDraft(teacherName) {
       Object.entries(savedScores).forEach(([k, v]) => {
         scores[k] = v;
       });
-      showToast('已載入上次的評分進度');
+      showToast('已載入「' + teacherName + '」的評分進度');
     }
   }).catch(err => {
     console.warn('Draft load failed:', err);
-    // Try localStorage fallback
-    const local = localStorage.getItem('draft_' + teacherName);
-    if (local) {
-      try {
-        const saved = JSON.parse(local);
-        Object.entries(saved).forEach(([k, v]) => { scores[k] = v; });
-        showToast('已載入本地儲存的進度');
-      } catch(e) {}
-    }
+    showToast('載入進度失敗：' + err.message);
   });
 }
 
