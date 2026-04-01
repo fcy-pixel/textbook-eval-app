@@ -971,6 +971,8 @@ function doLogin() {
   const name = document.getElementById('login-name').value.trim();
   if (!name) { showToast('請輸入姓名'); return; }
   currentTeacher = name;
+  // Clear all previous scores before loading new user
+  scores = {};
   document.getElementById('display-teacher').textContent = name;
   document.getElementById('display-date').textContent = new Date().toLocaleDateString('zh-HK');
   // Load saved draft from Firestore
