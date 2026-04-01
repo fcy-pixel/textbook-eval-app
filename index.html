@@ -179,6 +179,18 @@
   .score-btn.selected-2 { background: var(--score2); color: white; border-color: var(--score2); }
   .score-btn.selected-1 { background: var(--score1); color: white; border-color: var(--score1); }
 
+  /* Scores container */
+  .scores-container {
+    display: flex;
+    gap: 8px;
+  }
+  .pub-score-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
   /* Publisher header row */
   .publisher-headers {
     display: flex;
@@ -315,7 +327,24 @@
     .publisher-headers { display: none; }
     .pub-header-item { width: auto; }
     .score-btn { width: 32px; height: 32px; font-size: 0.8em; }
-    .mobile-pub-label { display: block !important; }
+    .scores-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+    .pub-score-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mobile-pub-label {
+      display: block !important;
+      min-width: 36px;
+      font-size: 0.8em;
+      font-weight: 700;
+      color: var(--primary);
+    }
     .summary-table th, .summary-table td { padding: 6px 4px; font-size: 0.8em; }
     .summary-card { padding: 12px; }
     .admin-panel { padding: 12px; }
@@ -1106,11 +1135,11 @@ function createCriteriaRow(sectionId, idx, text, subcategory, publishers) {
   row.appendChild(textDiv);
 
   const scoresDiv = document.createElement('div');
-  scoresDiv.style.cssText = 'display:flex; gap:8px;';
+  scoresDiv.className = 'scores-container';
 
   publishers.forEach(pub => {
     const pubDiv = document.createElement('div');
-    pubDiv.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:2px;';
+    pubDiv.className = 'pub-score-row';
 
     const label = document.createElement('div');
     label.className = 'publisher-label mobile-pub-label';
