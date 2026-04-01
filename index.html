@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中華基督教會基慈小學 - 課本評選系統</title>
+<style>
+  :root {
+    --primary: #1a5276;
+    --primary-light: #2980b9;
+    --accent: #27ae60;
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --border: #dce1e8;
+    --text: #2c3e50;
+    --text-light: #7f8c8d;
+    --score4: #27ae60;
+    --score3: #2980b9;
+    --score2: #f39c12;
+    --score1: #e74c3c;
+    --danger: #e74c3c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: 20px 24px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 1.3em; font-weight: 600; }
+  header p { font-size: 0.85em; opacity: 0.85; margin-top: 4px; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+  /* Subject tabs */
+  .subject-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .subject-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .subject-tab:hover { border-color: var(--primary-light); }
+  .subject-tab.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+  }
+
+  /* Teacher info */
+  .teacher-info {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .teacher-info label { font-size: 0.85em; color: var(--text-light); display: block; margin-bottom: 4px; }
+  .teacher-info input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1em;
+    margin-bottom: 8px;
+  }
+
+  /* Section card */
+  .section-card {
+    background: var(--card);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 12px 16px;
+    background: #eaf2f8;
+    font-weight: 700;
+    font-size: 1em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .section-header .arrow { transition: transform 0.2s; font-size: 0.8em; }
+  .section-header.collapsed .arrow { transform: rotate(-90deg); }
+  .section-header.partB { background: #fef9e7; }
+  .section-body { padding: 0; }
+  .section-body.hidden { display: none; }
+
+  /* Criteria row */
+  .criteria-row {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f2f5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .criteria-row:last-child { border-bottom: none; }
+  .criteria-text {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.9em;
+    padding-top: 4px;
+  }
+  .criteria-subcategory {
+    font-size: 0.75em;
+    color: var(--primary-light);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Score buttons */
+  .score-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+  .publisher-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .publisher-label {
+    font-size: 0.7em;
+    font-weight: 600;
+    color: var(--text-light);
+    text-align: center;
+    min-width: 50px;
+  }
+  .publisher-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: white;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-btn:hover { transform: scale(1.1); }
+  .score-btn.selected-4 { background: var(--score4); color: white; border-color: var(--score4); }
+  .score-btn.selected-3 { background: var(--score3); color: white; border-color: var(--score3); }
+  .score-btn.selected-2 { background: var(--score2); color: white; border-color: var(--score2); }
+  .score-btn.selected-1 { background: var(--score1); color: white; border-color: var(--score1); }
+
+  /* Publisher header row */
+  .publisher-headers {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--border);
+  }
+  .pub-header-item {
+    width: 164px;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  /* Comment */
+  .comment-area {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+  }
+  .comment-area label { font-weight: 600; display: block; margin-bottom: 8px; }
+  .comment-area textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.95em;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  /* Summary */
+  .summary-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 2px solid var(--primary-light);
+  }
+  .summary-card h3 { color: var(--primary); margin-bottom: 12px; }
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .summary-table th, .summary-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.9em;
+  }
+  .summary-table th { background: #eaf2f8; font-weight: 600; }
+  .summary-table .total-row { background: #fef9e7; font-weight: 700; }
+
+  /* Buttons */
+  .btn-group { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.2s;
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-success { background: var(--accent); color: white; }
+  .btn-success:hover { background: #219a52; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-outline {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+  .btn-outline:hover { background: var(--primary); color: white; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--text);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    transition: transform 0.3s;
+    z-index: 999;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Admin panel */
+  .admin-panel {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 2px solid var(--accent);
+  }
+  .admin-panel h3 { color: var(--accent); margin-bottom: 12px; }
+  .result-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f2f5;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-teacher { font-weight: 600; }
+  .result-date { font-size: 0.8em; color: var(--text-light); }
+  .result-scores { font-size: 0.85em; margin-top: 4px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .criteria-row { flex-direction: column; }
+    .publisher-headers { display: none; }
+    .pub-header-item { width: auto; }
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Login */
+  .login-box {
+    max-width: 400px;
+    margin: 60px auto;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 32px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .login-box h2 { margin-bottom: 20px; color: var(--primary); }
+  .login-box input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1em;
+    margin-bottom: 12px;
+  }
+  .login-box .btn { width: 100%; }
+
+  /* Progress bar */
+  .progress-bar-container {
+    background: #e8e8e8;
+    border-radius: 10px;
+    height: 8px;
+    margin: 8px 0 16px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--primary-light));
+    border-radius: 10px;
+    transition: width 0.3s;
+  }
+  .progress-text { font-size: 0.8em; color: var(--text-light); text-align: right; }
+
+  .view-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .view-toggle .btn { flex: none; padding: 8px 16px; font-size: 0.85em; }
+  .view-toggle .btn.active-view { background: var(--primary); color: white; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>中華基督教會基慈小學</h1>
+  <p>2026-2027年度 課本評選系統</p>
+</header>
+
+<div class="container">
+  <!-- LOGIN PAGE -->
+  <div id="page-login" class="page active">
+    <div class="login-box">
+      <h2>教師登入</h2>
+      <input type="text" id="login-name" placeholder="姓名">
+      <div class="btn-group" style="margin-top: 8px;">
+        <button class="btn btn-primary" onclick="doLogin()">開始評分</button>
+      </div>
+      <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+        <input type="password" id="admin-password" placeholder="管理員密碼">
+        <button class="btn btn-outline" onclick="showAdmin()" style="font-size: 0.85em; margin-top:8px;">查看統計報告</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVALUATION PAGE -->
+  <div id="page-eval" class="page">
+    <div class="teacher-info">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <label>教師：<strong id="display-teacher"></strong></label>
+          <label>日期：<strong id="display-date"></strong></label>
+        </div>
+        <button class="btn btn-outline" onclick="logout()" style="flex:none; padding:6px 14px; font-size:0.8em;">登出</button>
+      </div>
+    </div>
+
+    <div class="subject-tabs" id="subject-tabs"></div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-text" id="progress-text">0 / 0 已評分</div>
+
+    <div id="form-container"></div>
+
+    <div class="comment-area">
+      <label>整體評語：</label>
+      <textarea id="comment" placeholder="請填寫整體評語..."></textarea>
+    </div>
+
+    <div class="summary-card" id="summary-card">
+      <h3>分數摘要</h3>
+      <table class="summary-table" id="summary-table"></table>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-success" onclick="submitForm()">提交評分</button>
+      <button class="btn btn-outline" onclick="clearForm()">清除重填</button>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" class="page">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="color:var(--primary);">統計報告</h2>
+      <button class="btn btn-outline" onclick="backToLogin()" style="flex:none; padding:6px 14px; font-size:0.85em;">返回</button>
+    </div>
+
+    <div class="subject-tabs" id="admin-subject-tabs"></div>
+
+    <div class="view-toggle">
+      <button class="btn btn-outline active-view" id="btn-view-summary" onclick="switchAdminView('summary')">整體統計</button>
+      <button class="btn btn-outline" id="btn-view-detail" onclick="switchAdminView('detail')">個別記錄</button>
+    </div>
+
+    <div id="admin-summary" class="admin-panel">
+      <h3>平均分統計</h3>
+      <div id="admin-summary-content"></div>
+    </div>
+
+    <div id="admin-detail" class="admin-panel" style="display:none;">
+      <h3>個別教師評分記錄</h3>
+      <div id="admin-detail-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA: All 3 subjects' evaluation criteria
+// ══════════════════════════════════════════════════════════════
+
+const SUBJECTS = {
+  science: {
+    name: "科學科",
+    publishers: ["教育", "聯合", "現代"],
+    partA: "甲、課本評分",
+    partB: "乙、教學資源",
+    sections: {
+      "A": [
+        {
+          id: "s1", title: "(一) 內容",
+          items: [
+            "內容配合小學科學科課程指引的宗旨及目標",
+            "內容有效配合課程要求，不需附加材料，仍足以獨立使用",
+            "概念正確、清晰及發展合理",
+            "內容能配合科學教育的需要：掌握科學知識、運用科學語言溝通、初步發展工程思維等",
+            "深淺程度適合該級學生的年齡、興趣及認知水平",
+            "配合國家「科教興國」的方向，具備相關教學活動",
+            "課本能協助學生有系統地培養正確價值觀",
+            "課本能協助學生有系統地發展共通能力",
+            "讓學生逐步建構知識，發展不同層次認知能力"
+          ]
+        },
+        {
+          id: "s2", title: "(二) 資料",
+          items: [
+            "資料適合學生學齡，具趣味性",
+            "照片、圖畫、圖表等準確、切題和有效",
+            "加入適量和合宜的參考書目，鼓勵及方便學生自行閱讀更多資料"
+          ]
+        },
+        {
+          id: "s3", title: "(三) 學習活動",
+          items: [
+            "設計適當、具意義及多樣化",
+            "著重探究學習，培養學生科學過程技能和基本工程思維",
+            "發展學生綜合和應用知識與技能的能力",
+            "活動提供清晰指示和必需資料，學生容易理解，可行性高",
+            "善用社區資源，進行全方位學習",
+            "須提醒學生注意安全和遵守安全規則"
+          ]
+        },
+        {
+          id: "s4", title: "(四) 組織安排",
+          items: [
+            "結構以目錄、章節、標題、大綱等編排方法作出明確劃分",
+            "內容的組織及編排合理，容易分辨及實行科學探究過程(PDAR)及工程設計過程(PDIR)",
+            "引言部分包含簡單的學習指南，教導學生如何使用課本",
+            "每個學習主題包括學習目標概覽或已有知識",
+            "課文總結配合單元內容，並且首尾呼應",
+            "目錄的章節清楚易辨，主題配合學習內容，課文標題吸引，易於閱讀"
+          ]
+        },
+        {
+          id: "s5", title: "(五) 語文及編印設計",
+          items: [
+            "用語的深淺程度恰當，讓學生獨立地從閱讀中學習",
+            "採用學生熟悉及有趣的表達方式",
+            "文字量和深淺程度適中",
+            "提供適當提示幫助學生理解和運用科學科用語",
+            "編排合理統一，行距及留白得宜",
+            "插圖、相片、圖表等推動學生思考，進行探究學習",
+            "課本冊次數量和重量適中",
+            "字型及字體大小恰當"
+          ]
+        },
+        {
+          id: "s6", title: "(六) 學生作業",
+          items: [
+            "內容涵蓋課文內容，有效鞏固所學",
+            "題目設計重思考和知識的應用",
+            "份量適中",
+            "提供適量的開放式思考問題"
+          ]
+        },
+        {
+          id: "s7", title: "(七) 價格",
+          items: ["參考附件一"]
+        }
+      ],
+      "B": [
+        {
+          id: "s8", title: "(一) 教師用書",
+          items: [
+            "紅版內容、教學建議及相關參考資料齊備、詳盡及實用",
+            "附注多元化的教學策略，有助照顧學生學習多樣性",
+            "備清晰的相關教材提示",
+            "提供充足的參考書籍、網頁等資源索引",
+            "版面簡潔清晰，容易閱讀",
+            "所有參考資料備電子版檔案，方便自行編製教材"
+          ]
+        },
+        {
+          id: "s9", title: "(二) 教師資源教材套",
+          subcategories: [
+            { sub: "教具/學具", items: [
+              "教具／學具緊密配合學習內容",
+              "出版社能根據學校需要提供或借用",
+              "教材價格合理、適切"
+            ]},
+            { sub: "工作紙", items: [
+              "種類多元化，配合不同教學需要",
+              "備有思維訓練工作紙提升思維訓練",
+              "備不同版本，照顧學生學習多樣性",
+              "與學生課本分開，可彈性選用",
+              "備可修改電子檔案，方便自行修訂"
+            ]},
+            { sub: "照顧學生學習多樣性", items: [
+              "提供專業教學建議",
+              "提供完備而能照顧不同學習需要學生的資料卡及活動卡等",
+              "備有單元評估練習"
+            ]}
+          ]
+        },
+        {
+          id: "s10", title: "(三) 資訊科技教材",
+          subcategories: [
+            { sub: "錄像", items: [
+              "數量和種類豐富",
+              "內容專業、生活化",
+              "畫面質素佳"
+            ]},
+            { sub: "互動電子教材", items: [
+              "數量和種類豐富",
+              "能配合教學需要，實用性強",
+              "備專為科學教育而設計的虛擬互動教材"
+            ]},
+            { sub: "題目庫、插圖庫", items: [
+              "題型和數量豐富",
+              "備題目索引印刷版本，方便參考",
+              "可用編號選題，節省時間",
+              "備「圖片和插圖庫」，方便出題"
+            ]},
+            { sub: "網上支援", items: [
+              "經常更新；提供最新時事資訊及教材",
+              "內容豐富，提供課本及額外資源的檔案，方便備課",
+              "提供網上學習平台，讓學生進行延伸學習"
+            ]}
+          ]
+        },
+        {
+          id: "s11", title: "(四) 其他教材",
+          subcategories: [
+            { sub: "跨學科活動", items: [
+              "能協助進行跨學科學習",
+              "課程架構有助人文科及科學科的協作學習"
+            ]},
+            { sub: "科學實驗", items: [
+              "實驗材料容易取得，適合小學程度"
+            ]}
+          ]
+        },
+        {
+          id: "s12", title: "(五) 教育服務支援",
+          items: ["教育服務支援涵蓋範圍全面，能支援非常規教學，如：教師培訓工作坊、學生活動工作坊"]
+        }
+      ]
+    }
+  },
+
+  tech: {
+    name: "科技教育科",
+    publishers: ["教育", "現代"],
+    partA: null,
+    partB: null,
+    sections: {
+      "A": [
+        {
+          id: "t1", title: "(一) 學生課本",
+          items: [
+            "課題切合教育局課程發展議會的「電腦科課程指引」內容",
+            "提供多元化課題選擇，讓學校可以按校本需要進行自組課程",
+            "內容完整，有效配合課程要求而獨立使用，毋須附加材料",
+            "內容切合時宜，資料／數據準確及適切，更新速度快",
+            "提供相關資料、提示及學習指南，讓學生有充足資訊進行探究式學習",
+            "活動形式多樣化，有效達成學習目標",
+            "活動指示清晰，步驟簡單",
+            "版面整齊、比例恰當，便於學生閱讀"
+          ]
+        },
+        {
+          id: "t2", title: "(二) 教師用書",
+          items: [
+            "指出常見錯誤及解說",
+            "教學建議可行，參考資料詳盡、實用",
+            "備照顧學習差異建議",
+            "相關配套資源提示清晰",
+            "所有進度表、教學流程和參考資料等備有可修改的電子檔案，方便作校本調適"
+          ]
+        },
+        {
+          id: "t3", title: "(三) 資訊科技教材",
+          subcategories: [
+            { sub: "電子課本", items: [
+              "版面整齊、比例恰當，便於閱讀",
+              "備課堂管理功能",
+              "功能齊全及多元化",
+              "連結相關配套資源，方便使用"
+            ]},
+            { sub: "互動電子教材", items: [
+              "數量和種類豐富，例如互動遊戲、動畫等"
+            ]},
+            { sub: "電子學習系統", items: [
+              "指引清晰易明，方便學生使用",
+              "數量和種類豐富，例如智慧課堂、電子練習等",
+              "具自動批改功能",
+              "備學生表現分析報告",
+              "介面清晰，方便老師瀏覽學生習作，進行回饋"
+            ]},
+            { sub: "影片", items: [
+              "備示範影片，方便教學",
+              "備翻轉課堂影片，促進課前自學",
+              "提供資訊科技素養內容"
+            ]},
+            { sub: "題目庫及模擬試卷", items: [
+              "題型多元化，配合教學趨勢及不同評估模式",
+              "提供資訊科技素養內容"
+            ]}
+          ]
+        },
+        {
+          id: "t4", title: "(四) 老師支援",
+          items: [
+            "定期提供教師專業培訓工作坊",
+            "電子教材備有教師使用手冊",
+            "定期派員訪校，收集數據，反映學校需要及使用教材的情況，致力優化教材"
+          ]
+        },
+        {
+          id: "t5", title: "(五) 學生支援",
+          items: [
+            "備有學習檔案，方便學生對之前所學課題進行回顧",
+            "提供大量影片、動畫及遊戲，讓學生網上學習"
+          ]
+        },
+        {
+          id: "t6", title: "(六) 價格",
+          items: ["價格(見附件一)"]
+        }
+      ]
+    }
+  },
+
+  humanities: {
+    name: "人文科",
+    publishers: ["教育", "聯合", "現代"],
+    partA: "甲、課本評分",
+    partB: "乙、教學資源",
+    sections: {
+      "A": [
+        {
+          id: "h1", title: "(一) 內容",
+          items: [
+            "切合《小學人文科課程框架》的課程宗旨及目標",
+            "有效配合課程要求，不需附加材料，仍足以獨立使用",
+            "概念正確、清晰及發展合理",
+            "能聚焦於課程發展重點：加強國民教育，持續推動價值觀教育",
+            "深淺程度適合該級學生的年齡、興趣及認知水平",
+            "課本能協助學生有系統地發展共通能力",
+            "讓學生逐步建構知識，發展不同層次認知能力"
+          ]
+        },
+        {
+          id: "h2", title: "(二) 資料",
+          items: [
+            "資料適合學生學齡，具趣味性",
+            "照片、圖畫、圖表等準確、切題和有效",
+            "加入適量和合宜的參考書目，鼓勵及方便學生自行閱讀更多資料",
+            "內容切合時宜，資料／數據準確及適切和準確，尤其地圖、國旗等資料"
+          ]
+        },
+        {
+          id: "h3", title: "(三) 學習活動",
+          items: [
+            "設計適當、具意義及多樣化",
+            "發展學生綜合和應用知識與技能的能力",
+            "活動提供清晰指示和必需資料，學生容易理解，可行性高",
+            "善用社區資源，進行全方位學習"
+          ]
+        },
+        {
+          id: "h4", title: "(四) 組織安排",
+          items: [
+            "結構以目錄、章節、標題、大綱等編排方法作出明確劃分",
+            "引言部分包含簡單的學習指南，教導學生如何使用課本",
+            "每個學習主題包括學習目標概覽或已有知識",
+            "課文總結配合單元內容，並且首尾呼應",
+            "目錄的章節清楚易辨，主題配合學習內容，課文標題吸引，易於閱讀"
+          ]
+        },
+        {
+          id: "h5", title: "(五) 語文及編印設計",
+          items: [
+            "用語的深淺程度恰當，讓學生獨立地從閱讀中學習",
+            "採用學生熟悉及有趣的表達方式",
+            "文字量和深淺程度適中",
+            "提供適當提示幫助學生理解和運用人文科用語",
+            "編排合理統一，行距及留白得宜",
+            "插圖、相片、圖表等推動學生思考，進行探究學習",
+            "課本冊次數量和重量適中",
+            "字型及字體大小恰當"
+          ]
+        },
+        {
+          id: "h6", title: "(六) 學生作業",
+          items: [
+            "內容涵蓋課文內容，有效鞏固所學",
+            "題目設計重思考和知識的應用",
+            "份量適中",
+            "提供適量的開放式思考問題"
+          ]
+        },
+        {
+          id: "h7", title: "(七) 價格",
+          items: ["參考附件一"]
+        }
+      ],
+      "B": [
+        {
+          id: "h8", title: "(一) 教師用書",
+          items: [
+            "指出常見錯誤及解說",
+            "教學建議可行，參考資料詳盡、實用",
+            "提供多元化的教學策略和活動，及照顧學習差異建議，幫助學生達成學習目標",
+            "提供多樣化和具趣味的課堂教學資源",
+            "所有進度表、教學流程和參考資料等備有可修改的電子檔案，方便作校本調適"
+          ]
+        },
+        {
+          id: "h9", title: "(二) 教師資源教材套",
+          subcategories: [
+            { sub: "教具/學具", items: [
+              "教具／學具緊密配合學習內容",
+              "出版社能根據學校需要提供或借用"
+            ]},
+            { sub: "工作紙", items: [
+              "種類多元化，配合不同教學需要",
+              "備有思維訓練工作紙提升思維訓練",
+              "備不同版本，照顧學生學習多樣性",
+              "與學生課本分開，可彈性選用",
+              "備可修改電子檔案，方便自行修訂"
+            ]},
+            { sub: "照顧學生學習多樣性", items: [
+              "提供專業教學建議",
+              "提供完備而能照顧不同學習需要學生的資料卡及活動卡等",
+              "備有單元評估練習"
+            ]}
+          ]
+        },
+        {
+          id: "h10", title: "(三) 資訊科技教材",
+          subcategories: [
+            { sub: "影片", items: [
+              "數量和種類豐富",
+              "內容專業、生活化",
+              "畫面質素佳"
+            ]},
+            { sub: "互動電子教材", items: [
+              "數量和種類豐富，例如互動遊戲、動畫、3D模型、AR等",
+              "能配合教學需要，實用性強"
+            ]},
+            { sub: "題目庫、插圖庫", items: [
+              "題型和數量豐富",
+              "備題目索引印刷版本，方便參考",
+              "可用編號選題，節省時間",
+              "備「圖片和插圖庫」，方便出題"
+            ]},
+            { sub: "網上支援", items: [
+              "經常更新；提供最新時事資訊及教材",
+              "內容豐富，提供電子版課本及額外資源的檔案，方便備課",
+              "提供網上學習平台，讓學生進行延伸學習"
+            ]}
+          ]
+        },
+        {
+          id: "h11", title: "(四) 其他教材",
+          subcategories: [
+            { sub: "跨學科活動", items: [
+              "提供跨課程閱讀材料，推動學生「從閱讀中學習」"
+            ]},
+            { sub: "延展學習配套", items: [
+              "提供多樣化的延展學習配套(包括專題研習、戶外學習、跨學科學習等)，為學生提供豐富多元的學習經歷"
+            ]},
+            { sub: "評估資源", items: [
+              "除紙筆評估外，提供多元化的評估資源(例如：口頭評估、小組活動、專題研習、跨課程閱讀、跨課程評估)"
+            ]},
+            { sub: "全方位戶外學習", items: [
+              "參觀景點多元化，配合不同範疇，備活動資料及工作紙，方便進行活動"
+            ]},
+            { sub: "自學資源", items: [
+              "提供大量影片、動畫及遊戲，讓學生網上學習"
+            ]}
+          ]
+        },
+        {
+          id: "h12", title: "(五) 教育服務支援",
+          items: ["定期提供教師專業培訓工作坊，協助舉辦人文科活動，包括：攤位遊戲、趣味展板等"]
+        }
+      ]
+    }
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  Firebase config
+// ══════════════════════════════════════════════════════════════
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA_ZO2vF2JeZ-rjMWerFgYeR-zb08-ZBRs",
+  authDomain: "book-select-data.firebaseapp.com",
+  projectId: "book-select-data",
+  storageBucket: "book-select-data.firebasestorage.app",
+  messagingSenderId: "996494439978",
+  appId: "1:996494439978:web:71bdcd7c6cbda74d233553",
+  measurementId: "G-4BXKX4D1MY"
+};
+
+let db = null;
+let firebaseReady = false;
+
+function initFirebase(config) {
+  try {
+    firebase.initializeApp(config);
+    db = firebase.firestore();
+    firebaseReady = true;
+    console.log("Firestore connected");
+  } catch(e) {
+    console.warn("Firebase init failed:", e);
+    firebaseReady = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  App State
+// ══════════════════════════════════════════════════════════════
+
+let currentSubject = 'science';
+let currentTeacher = '';
+let scores = {}; // { "science": { "s1_0_教育": 4, ... }, "tech": {...}, "humanities": {...} }
+let adminSubject = 'science';
+
+// ══════════════════════════════════════════════════════════════
+//  Page Management
+// ══════════════════════════════════════════════════════════════
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+}
+
+function doLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  if (!name) { showToast('請輸入姓名'); return; }
+  currentTeacher = name;
+  document.getElementById('display-teacher').textContent = name;
+  document.getElementById('display-date').textContent = new Date().toLocaleDateString('zh-HK');
+  showPage('eval');
+  renderSubjectTabs();
+  switchSubject('science');
+}
+
+function logout() {
+  showPage('login');
+}
+
+const ADMIN_PASSWORD = 'keichi2026';
+
+function showAdmin() {
+  const pw = document.getElementById('admin-password').value;
+  if (pw !== ADMIN_PASSWORD) {
+    showToast('密碼錯誤');
+    return;
+  }
+  showPage('admin');
+  renderAdminTabs();
+  loadAdminData();
+}
+
+function backToLogin() {
+  showPage('login');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Subject Tabs
+// ══════════════════════════════════════════════════════════════
+
+function renderSubjectTabs() {
+  const container = document.getElementById('subject-tabs');
+  container.innerHTML = '';
+  Object.entries(SUBJECTS).forEach(([key, subj]) => {
+    const tab = document.createElement('div');
+    tab.className = 'subject-tab' + (key === currentSubject ? ' active' : '');
+    tab.textContent = subj.name;
+    tab.onclick = () => switchSubject(key);
+    container.appendChild(tab);
+  });
+}
+
+function switchSubject(key) {
+  currentSubject = key;
+  renderSubjectTabs();
+  renderForm();
+  updateSummary();
+  updateProgress();
+}
+
+function renderAdminTabs() {
+  const container = document.getElementById('admin-subject-tabs');
+  container.innerHTML = '';
+  Object.entries(SUBJECTS).forEach(([key, subj]) => {
+    const tab = document.createElement('div');
+    tab.className = 'subject-tab' + (key === adminSubject ? ' active' : '');
+    tab.textContent = subj.name;
+    tab.onclick = () => { adminSubject = key; renderAdminTabs(); loadAdminData(); };
+    container.appendChild(tab);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Form Rendering
+// ══════════════════════════════════════════════════════════════
+
+function renderForm() {
+  const subj = SUBJECTS[currentSubject];
+  const container = document.getElementById('form-container');
+  container.innerHTML = '';
+
+  const allParts = subj.partA ? ['A', 'B'] : ['A'];
+
+  allParts.forEach(partKey => {
+    if (partKey === 'A' && subj.partA) {
+      const h = document.createElement('h3');
+      h.style.cssText = 'margin:16px 0 8px; color:var(--primary);';
+      h.textContent = subj.partA;
+      container.appendChild(h);
+    }
+    if (partKey === 'B' && subj.partB) {
+      const h = document.createElement('h3');
+      h.style.cssText = 'margin:16px 0 8px; color:#e67e22;';
+      h.textContent = subj.partB;
+      container.appendChild(h);
+    }
+
+    const sections = subj.sections[partKey] || [];
+    sections.forEach(sec => {
+      const card = document.createElement('div');
+      card.className = 'section-card';
+
+      const header = document.createElement('div');
+      header.className = 'section-header' + (partKey === 'B' ? ' partB' : '');
+      header.innerHTML = `<span>${sec.title}</span><span class="arrow">▼</span>`;
+      header.onclick = () => {
+        header.classList.toggle('collapsed');
+        body.classList.toggle('hidden');
+      };
+      card.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'section-body';
+
+      // Publisher headers
+      const phDiv = document.createElement('div');
+      phDiv.className = 'publisher-headers';
+      subj.publishers.forEach(pub => {
+        const ph = document.createElement('div');
+        ph.className = 'pub-header-item';
+        ph.textContent = pub;
+        phDiv.appendChild(ph);
+      });
+      body.appendChild(phDiv);
+
+      // Items
+      if (sec.items) {
+        sec.items.forEach((item, idx) => {
+          body.appendChild(createCriteriaRow(sec.id, idx, item, null, subj.publishers));
+        });
+      }
+      if (sec.subcategories) {
+        let globalIdx = 0;
+        sec.subcategories.forEach(subcat => {
+          subcat.items.forEach((item, idx) => {
+            body.appendChild(createCriteriaRow(sec.id, globalIdx, item, subcat.sub, subj.publishers));
+            globalIdx++;
+          });
+        });
+      }
+
+      card.appendChild(body);
+      container.appendChild(card);
+    });
+  });
+
+  // Load existing comment
+  const commentKey = currentSubject + '_comment';
+  document.getElementById('comment').value = scores[commentKey] || '';
+  document.getElementById('comment').onchange = () => {
+    scores[currentSubject + '_comment'] = document.getElementById('comment').value;
+  };
+}
+
+function createCriteriaRow(sectionId, idx, text, subcategory, publishers) {
+  const row = document.createElement('div');
+  row.className = 'criteria-row';
+
+  const textDiv = document.createElement('div');
+  textDiv.className = 'criteria-text';
+  if (subcategory) {
+    textDiv.innerHTML = `<span class="criteria-subcategory">${subcategory}</span>${text}`;
+  } else {
+    textDiv.textContent = text;
+  }
+  row.appendChild(textDiv);
+
+  const scoresDiv = document.createElement('div');
+  scoresDiv.style.cssText = 'display:flex; gap:8px;';
+
+  publishers.forEach(pub => {
+    const pubDiv = document.createElement('div');
+    pubDiv.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:2px;';
+
+    const label = document.createElement('div');
+    label.className = 'publisher-label';
+    label.textContent = pub;
+    label.style.display = 'none'; // Hidden on desktop (shown in header), shown on mobile via CSS
+    pubDiv.appendChild(label);
+
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'score-group';
+
+    [4, 3, 2, 1].forEach(score => {
+      const btn = document.createElement('button');
+      btn.className = 'score-btn';
+      btn.textContent = score;
+
+      const scoreKey = `${currentSubject}_${sectionId}_${idx}_${pub}`;
+      if (scores[scoreKey] === score) {
+        btn.classList.add('selected-' + score);
+      }
+
+      btn.onclick = () => {
+        // Toggle off if same score clicked
+        if (scores[scoreKey] === score) {
+          delete scores[scoreKey];
+        } else {
+          scores[scoreKey] = score;
+        }
+        // Re-render button group
+        btnGroup.querySelectorAll('.score-btn').forEach(b => {
+          b.className = 'score-btn';
+          if (scores[scoreKey] === parseInt(b.textContent)) {
+            b.classList.add('selected-' + b.textContent);
+          }
+        });
+        updateSummary();
+        updateProgress();
+      };
+
+      btnGroup.appendChild(btn);
+    });
+
+    pubDiv.appendChild(btnGroup);
+    scoresDiv.appendChild(pubDiv);
+  });
+
+  row.appendChild(scoresDiv);
+  return row;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Summary & Progress
+// ══════════════════════════════════════════════════════════════
+
+function updateProgress() {
+  const subj = SUBJECTS[currentSubject];
+  let total = 0;
+  let filled = 0;
+
+  const allParts = subj.partA ? ['A', 'B'] : ['A'];
+  allParts.forEach(pk => {
+    (subj.sections[pk] || []).forEach(sec => {
+      let count = 0;
+      if (sec.items) count = sec.items.length;
+      if (sec.subcategories) sec.subcategories.forEach(sc => count += sc.items.length);
+
+      subj.publishers.forEach(pub => {
+        for (let i = 0; i < count; i++) {
+          total++;
+          if (scores[`${currentSubject}_${sec.id}_${i}_${pub}`]) filled++;
+        }
+      });
+    });
+  });
+
+  const pct = total > 0 ? Math.round(filled / total * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${filled} / ${total} 已評分 (${pct}%)`;
+}
+
+function updateSummary() {
+  const subj = SUBJECTS[currentSubject];
+  const table = document.getElementById('summary-table');
+
+  let html = '<tr><th>評審項目</th>';
+  subj.publishers.forEach(pub => html += `<th>${pub}</th>`);
+  html += '</tr>';
+
+  const totals = {};
+  subj.publishers.forEach(pub => totals[pub] = 0);
+
+  const allParts = subj.partA ? ['A', 'B'] : ['A'];
+  allParts.forEach(pk => {
+    (subj.sections[pk] || []).forEach(sec => {
+      html += `<tr><td style="text-align:left">${sec.title}</td>`;
+      let count = 0;
+      if (sec.items) count = sec.items.length;
+      if (sec.subcategories) sec.subcategories.forEach(sc => count += sc.items.length);
+
+      subj.publishers.forEach(pub => {
+        let sum = 0;
+        let n = 0;
+        for (let i = 0; i < count; i++) {
+          const v = scores[`${currentSubject}_${sec.id}_${i}_${pub}`];
+          if (v) { sum += v; n++; }
+        }
+        totals[pub] += sum;
+        html += `<td>${sum > 0 ? sum : '-'}</td>`;
+      });
+      html += '</tr>';
+    });
+  });
+
+  html += '<tr class="total-row"><td style="text-align:left"><strong>合計</strong></td>';
+  subj.publishers.forEach(pub => html += `<td><strong>${totals[pub] || '-'}</strong></td>`);
+  html += '</tr>';
+
+  table.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Submit to Firebase
+// ══════════════════════════════════════════════════════════════
+
+function submitForm() {
+  if (!currentTeacher) { showToast('請先登入'); return; }
+
+  // Collect all scores for current subject
+  const subj = SUBJECTS[currentSubject];
+  const result = {
+    teacher: currentTeacher,
+    subject: currentSubject,
+    subjectName: subj.name,
+    timestamp: new Date().toISOString(),
+    date: new Date().toLocaleDateString('zh-HK'),
+    comment: scores[currentSubject + '_comment'] || '',
+    scores: {},
+    totals: {}
+  };
+
+  const allParts = subj.partA ? ['A', 'B'] : ['A'];
+  subj.publishers.forEach(pub => result.totals[pub] = 0);
+
+  allParts.forEach(pk => {
+    (subj.sections[pk] || []).forEach(sec => {
+      let count = 0;
+      if (sec.items) count = sec.items.length;
+      if (sec.subcategories) sec.subcategories.forEach(sc => count += sc.items.length);
+
+      subj.publishers.forEach(pub => {
+        for (let i = 0; i < count; i++) {
+          const key = `${sec.id}_${i}_${pub}`;
+          const val = scores[`${currentSubject}_${key}`];
+          if (val) {
+            result.scores[key] = val;
+            result.totals[pub] += val;
+          }
+        }
+      });
+    });
+  });
+
+  // Check if any score filled
+  if (Object.keys(result.scores).length === 0) {
+    showToast('請至少填寫一項評分');
+    return;
+  }
+
+  if (firebaseReady) {
+    // Flatten scores keys: replace dots with underscores (Firestore field name restriction)
+    const safeScores = {};
+    Object.entries(result.scores).forEach(([k, v]) => {
+      safeScores[k.replace(/\./g, '_')] = v;
+    });
+    result.scores = safeScores;
+
+    // If editing an existing record, update it; otherwise add new
+    const savePromise = editingDocId
+      ? db.collection('evaluations').doc(editingSubject).collection('records').doc(editingDocId).set(result)
+      : db.collection('evaluations').doc(currentSubject).collection('records').add(result);
+
+    savePromise.then(() => {
+      showToast(editingDocId ? '已更新評分！' : '已成功提交「' + subj.name + '」評分！');
+      editingDocId = null;
+      editingSubject = null;
+    }).catch(err => {
+      console.error('Firestore error:', err);
+      alert('提交失敗：' + err.code + '\n' + err.message + '\n\n請確認：\n1. Firebase Console 已啟用 Firestore\n2. Firestore Rules 已設為 allow read, write: true');
+      saveLocal(result);
+    });
+  } else {
+    saveLocal(result);
+    alert('Firebase 未連線！\n\n請打開瀏覽器 Console (F12) 查看錯誤訊息。');
+  }
+}
+
+function saveLocal(result) {
+  const key = 'eval_' + result.subject + '_' + Date.now();
+  localStorage.setItem(key, JSON.stringify(result));
+}
+
+function clearForm() {
+  if (!confirm('確定要清除「' + SUBJECTS[currentSubject].name + '」的所有評分嗎？')) return;
+  const prefix = currentSubject + '_';
+  Object.keys(scores).forEach(k => {
+    if (k.startsWith(prefix)) delete scores[k];
+  });
+  renderForm();
+  updateSummary();
+  updateProgress();
+  showToast('已清除');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Admin Panel
+// ══════════════════════════════════════════════════════════════
+
+let adminView = 'summary';
+
+function switchAdminView(view) {
+  adminView = view;
+  document.getElementById('btn-view-summary').classList.toggle('active-view', view === 'summary');
+  document.getElementById('btn-view-detail').classList.toggle('active-view', view === 'detail');
+  document.getElementById('admin-summary').style.display = view === 'summary' ? '' : 'none';
+  document.getElementById('admin-detail').style.display = view === 'detail' ? '' : 'none';
+}
+
+function loadAdminData() {
+  if (!firebaseReady) {
+    loadAdminFromLocal();
+    return;
+  }
+
+  db.collection('evaluations').doc(adminSubject).collection('records').get().then(snapshot => {
+    if (snapshot.empty) {
+      document.getElementById('admin-summary-content').innerHTML = '<p style="color:var(--text-light);">暫無評分記錄</p>';
+      document.getElementById('admin-detail-content').innerHTML = '<p style="color:var(--text-light);">暫無評分記錄</p>';
+      return;
+    }
+    const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderAdminSummary(records);
+    renderAdminDetail(records);
+  }).catch(() => {
+    loadAdminFromLocal();
+  });
+}
+
+function loadAdminFromLocal() {
+  const records = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('eval_' + adminSubject + '_')) {
+      try {
+        records.push(JSON.parse(localStorage.getItem(key)));
+      } catch(e) {}
+    }
+  }
+  if (records.length === 0) {
+    document.getElementById('admin-summary-content').innerHTML = '<p style="color:var(--text-light);">暫無評分記錄（本地）</p>';
+    document.getElementById('admin-detail-content').innerHTML = '<p style="color:var(--text-light);">暫無評分記錄（本地）</p>';
+    return;
+  }
+  renderAdminSummary(records);
+  renderAdminDetail(records);
+}
+
+function renderAdminSummary(records) {
+  const subj = SUBJECTS[adminSubject];
+  const avgTotals = {};
+  subj.publishers.forEach(pub => avgTotals[pub] = []);
+
+  records.forEach(rec => {
+    subj.publishers.forEach(pub => {
+      if (rec.totals && rec.totals[pub]) {
+        avgTotals[pub].push(rec.totals[pub]);
+      }
+    });
+  });
+
+  let html = `<p style="margin-bottom:12px;">共 <strong>${records.length}</strong> 位教師已提交評分</p>`;
+  html += '<table class="summary-table"><tr><th>出版社</th><th>平均總分</th><th>最高分</th><th>最低分</th><th>提交人數</th></tr>';
+
+  subj.publishers.forEach(pub => {
+    const arr = avgTotals[pub];
+    if (arr.length > 0) {
+      const avg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+      const max = Math.max(...arr);
+      const min = Math.min(...arr);
+      html += `<tr><td><strong>${pub}</strong></td><td>${avg}</td><td>${max}</td><td>${min}</td><td>${arr.length}</td></tr>`;
+    } else {
+      html += `<tr><td><strong>${pub}</strong></td><td>-</td><td>-</td><td>-</td><td>0</td></tr>`;
+    }
+  });
+
+  html += '</table>';
+
+  // Per-section average
+  html += '<h4 style="margin-top:20px; color:var(--primary);">各項目平均分</h4>';
+  html += '<table class="summary-table"><tr><th>評審項目</th>';
+  subj.publishers.forEach(pub => html += `<th>${pub}</th>`);
+  html += '</tr>';
+
+  const allParts = subj.partA ? ['A', 'B'] : ['A'];
+  allParts.forEach(pk => {
+    (subj.sections[pk] || []).forEach(sec => {
+      html += `<tr><td style="text-align:left">${sec.title}</td>`;
+      let count = 0;
+      if (sec.items) count = sec.items.length;
+      if (sec.subcategories) sec.subcategories.forEach(sc => count += sc.items.length);
+
+      subj.publishers.forEach(pub => {
+        let grandSum = 0;
+        let grandN = 0;
+        records.forEach(rec => {
+          if (!rec.scores) return;
+          for (let i = 0; i < count; i++) {
+            const v = rec.scores[`${sec.id}_${i}_${pub}`];
+            if (v) { grandSum += v; grandN++; }
+          }
+        });
+        html += `<td>${grandN > 0 ? (grandSum / grandN).toFixed(1) : '-'}</td>`;
+      });
+      html += '</tr>';
+    });
+  });
+  html += '</table>';
+
+  document.getElementById('admin-summary-content').innerHTML = html;
+}
+
+function renderAdminDetail(records) {
+  const subj = SUBJECTS[adminSubject];
+  let html = '';
+
+  records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  records.forEach(rec => {
+    html += '<div class="result-row" style="position:relative;">';
+    html += `<div style="display:flex; justify-content:space-between; align-items:flex-start;">`;
+    html += `<div><div class="result-teacher">${rec.teacher || '未知'}</div>`;
+    html += `<div class="result-date">${rec.date || ''} ${rec.timestamp ? new Date(rec.timestamp).toLocaleTimeString('zh-HK') : ''}</div></div>`;
+    if (rec.id) {
+      html += `<div style="display:flex; gap:6px;">`;
+      html += `<button class="btn btn-outline" style="padding:4px 10px; font-size:0.75em; flex:none;" onclick="editRecord('${adminSubject}','${rec.id}')">編輯</button>`;
+      html += `<button class="btn btn-danger" style="padding:4px 10px; font-size:0.75em; flex:none;" onclick="deleteRecord('${adminSubject}','${rec.id}')">刪除</button>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+    html += '<div class="result-scores">';
+
+    subj.publishers.forEach(pub => {
+      const total = rec.totals && rec.totals[pub] ? rec.totals[pub] : 0;
+      html += `<span style="margin-right:16px;"><strong>${pub}：</strong>${total}分</span>`;
+    });
+
+    if (rec.comment) {
+      html += `<div style="margin-top:4px; font-size:0.85em; color:var(--text-light);">評語：${rec.comment}</div>`;
+    }
+    html += '</div></div>';
+  });
+
+  document.getElementById('admin-detail-content').innerHTML = html || '<p>暫無記錄</p>';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Admin Edit & Delete
+// ══════════════════════════════════════════════════════════════
+
+function deleteRecord(subject, docId) {
+  if (!confirm('確定要刪除這筆評分記錄嗎？')) return;
+  db.collection('evaluations').doc(subject).collection('records').doc(docId).delete().then(() => {
+    showToast('已刪除');
+    loadAdminData();
+  }).catch(err => {
+    showToast('刪除失敗：' + err.message);
+  });
+}
+
+function editRecord(subject, docId) {
+  // Load the record and populate the evaluation form for editing
+  db.collection('evaluations').doc(subject).collection('records').doc(docId).get().then(doc => {
+    if (!doc.exists) { showToast('找不到記錄'); return; }
+    const data = doc.data();
+
+    // Set the subject
+    currentSubject = data.subject || subject;
+    currentTeacher = data.teacher || '管理員';
+    editingDocId = docId;
+    editingSubject = subject;
+
+    // Load scores into state
+    const prefix = currentSubject + '_';
+    // Clear existing scores for this subject
+    Object.keys(scores).forEach(k => { if (k.startsWith(prefix)) delete scores[k]; });
+
+    // Restore scores
+    if (data.scores) {
+      Object.entries(data.scores).forEach(([k, v]) => {
+        scores[prefix + k] = v;
+      });
+    }
+    if (data.comment) {
+      scores[currentSubject + '_comment'] = data.comment;
+    }
+
+    // Switch to eval page in edit mode
+    document.getElementById('display-teacher').textContent = currentTeacher + '（管理員編輯中）';
+    document.getElementById('display-date').textContent = data.date || new Date().toLocaleDateString('zh-HK');
+    showPage('eval');
+    renderSubjectTabs();
+    renderForm();
+    updateSummary();
+    updateProgress();
+    showToast('正在編輯「' + (data.teacher || '') + '」的評分');
+  }).catch(err => {
+    showToast('載入失敗：' + err.message);
+  });
+}
+
+let editingDocId = null;
+let editingSubject = null;
+
+// ══════════════════════════════════════════════════════════════
+//  Toast
+// ══════════════════════════════════════════════════════════════
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Firebase Setup Modal
+// ══════════════════════════════════════════════════════════════
+
+// Auto-init Firebase on page load
+window.addEventListener('DOMContentLoaded', () => {
+  if (typeof firebase !== 'undefined') {
+    initFirebase(firebaseConfig);
+  }
+});
+</script>
+
+</body>
+</html>
